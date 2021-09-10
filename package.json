@@ -1,0 +1,20 @@
+{
+  "name": "elecctrochallengeserver",
+  "version": "1.0.0",
+  "description": "Servidor do challenge da elecctro",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Francisco Leal",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/eslint-plugin": "^5.1.0",
+    "@hapi/hapi": "^20.1.5",
+    "bcrypt": "^5.0.1",
+    "eslint": "^7.32.0",
+    "joi": "^17.4.2",
+    "knex": "^0.95.11",
+    "sqlite3": "^5.0.2"
+  }
+}
