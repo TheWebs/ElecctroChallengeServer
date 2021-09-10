@@ -2,11 +2,8 @@
 
 const Knex = require('knex');
 const Bcrypt = require('bcrypt');
-
-const saltRounds = 10;
-const tokenConfig = {
-    defaultDuration: 1000 * 60 * 60 * 24 * 3 //Token is valid for 3 days after creation (unless manually invalidated)
-};
+const Config = require('./server_configs');
+const Jwt = require('@hapi/jwt');
 
 const db = Knex({
     client: 'sqlite3',
@@ -57,7 +54,7 @@ const createTasksTable = async () => {
     });
 };
 
-//Returns false if unsuccessful and user_id id successful
+//Returns false if unsuccessful and token if successful
 const createUser = async (user) => {
 
     const invalidEmail = await emailExists(user.email);
@@ -65,8 +62,30 @@ const createUser = async (user) => {
         return false;
     }
 
-    const password = await Bcrypt.hash(user.password, saltRounds);
-    return db('users').insert({ name: user.name, email: user.email, token: 'sdfgsdfgsdfg', token_expire_date: (Date.now() + tokenConfig.defaultDuration), password });
+    const password = await Bcrypt.hash(user.password, Config.saltRounds);
+
+    const result = await db('users').insert({
+        name: user.name,
+        email: user.email,
+        token: '',
+        token_expire_date: (Date.now() + Config.tokenDefaultDuration),
+        password
+    });
+    if (!result) {
+        return false;
+    }
+
+    const newUser = await db('users').where({ user_id: result }).select().first();
+    delete newUser.password;
+    delete newUser.token;
+
+    const token = Jwt.token.generate({
+        user: newUser
+    }, Config.key);
+
+    await db('users').where({ user_id: newUser.user_id }).update({ token });
+
+    return token;
 };
 
 const login = async (email, password) => {
@@ -82,10 +101,19 @@ const login = async (email, password) => {
         return false;
     }
 
-    return user;
+    delete user.password;
+    delete user.token;
+
+    const token = Jwt.token.generate({
+        user
+    }, Config.key);
+
+    await db('users').where({ user_id: user.user_id }).update({ token, token_expire_date: (Date.now() + Config.tokenDefaultDuration) });
+
+    return token;
 };
 
-const loginWithToken = async (token) => {
+const checkTokenValid = async (token) => {
 
     const user = await db('users').where({ token }).select().first();
     if (!user) {
@@ -99,10 +127,31 @@ const loginWithToken = async (token) => {
     return user;
 };
 
-const invalidateUserToken = async (userId) => {
+const invalidateUserToken = async (token) => {
 
-    const success = await db('users').where({ user_id: userId }).update({ token_expire_date: (Date.now() - 10000) });
+    const success = await db('users').where({ token }).update({ token_expire_date: (Date.now() - 10000) });
     return success === 1;
+};
+
+const getUser = async (token) => {
+
+    const user = await db('users').column('user_id', 'name', 'email').where({ token }).select().first();
+    if (!user) {
+        return false;
+    }
+
+    return user;
+};
+
+const editUser = async (token, name, email) => {
+
+    const user = await db('users').column('user_id', 'name', 'email').where({ token }).select().first();
+    if (!user) {
+        return false;
+    }
+
+    const editedUser = await db('users').where({ token }).update({ name, email });
+    return editedUser;
 };
 
 //Checks if an email exists in the database
@@ -142,7 +191,7 @@ const fromCamelCase = (source) => {
 
     const keys = Object.keys(source);
     const newObject = {};
-    for ( let i = 0; i < keys.length; i += 1) {
+    for (let i = 0; i < keys.length; i += 1) {
         const originalKey = keys[i];
         const matches = keys[i].match(/[A-Z]/g);
         for (const capital of matches) {
@@ -159,10 +208,12 @@ module.exports = {
     createDatabaseStructure,
     createUser,
     login,
-    loginWithToken,
+    checkTokenValid,
     invalidateUserToken,
     toCamelCase,
-    fromCamelCase
+    fromCamelCase,
+    getUser,
+    editUser
 };
 
 const replaceAt = (text, index, replacement) => {
