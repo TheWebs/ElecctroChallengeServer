@@ -1,2 +1,4 @@
 # ElecctroChallengeServer
- Elecctro server challenge
+Elecctro server challenge
+# Database
+Using sqlite3
