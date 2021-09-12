@@ -88,6 +88,86 @@ const createUser = async (user) => {
     return token;
 };
 
+const createTask = async (userId, description) => {
+
+    const result = await db('tasks').insert({
+        description,
+        state: 'INCOMPLETE',
+        created_at: Date.now(),
+        completed_at: null,
+        owner: userId
+    });
+    if (!result) {
+        return false;
+    }
+
+    const newTask = await db('tasks').where({ task_id: result }).select().first();
+    if (!newTask) {
+        return false;
+    }
+
+    return newTask;
+};
+
+const getTaskForUser = async (userId, taskId) => {
+
+    const task = await db('tasks')
+        .where({ task_id: taskId, owner: userId }).select().first();
+    if (!task) {
+        return false;
+    }
+
+    return task;
+};
+
+const editTask = async (description, state, taskId) => {
+
+    const changes = {};
+    if (description) {
+        changes.description = description;
+    }
+
+    if (state) {
+        changes.state = state;
+        changes.completed_at = Date.now();
+    }
+
+    const result = await db('tasks').where({ task_id: taskId }).update(changes);
+    if (!result) {
+        return false;
+    }
+
+    const editedTask = await db('tasks').where({ task_id: taskId }).select().first();
+    if (!editTask) {
+        return false;
+    }
+
+    return editedTask;
+};
+
+const deleteTask = async (taskId) => {
+
+    const result = await db('tasks').where({ task_id: taskId }).del();
+    if (!result) {
+        return false;
+    }
+
+    return true;
+};
+
+const getTasksForUser = async (userId, filter, orderBy) => {
+
+    console.log(userId, filter, orderBy);
+    const filterOption = { owner: userId };
+    if (filter !== 'ALL') {
+        filterOption.state = filter;
+    }
+
+    const tasks = await db('tasks')
+        .where(filterOption).orderBy(orderBy).select();
+    return tasks;
+};
+
 const login = async (email, password) => {
 
     const validEmail = await emailExists(email);
@@ -161,62 +241,18 @@ const emailExists = async (email) => {
     return result.length > 0;
 };
 
-//Receives an object and changes its properties from this_case to thisCase
-const toCamelCase = (source) => {
-
-    const keys = Object.keys(source);
-    const newObject = {};
-    for (let i = 0; i < keys.length; i += 1) {
-        const originalKey = keys[i];
-        let location;
-        while (location !== -1) {
-            if (location === undefined) {
-                location = keys[i].indexOf('_');
-            }
-
-            keys[i] = replaceAt(keys[i], location + 1, keys[i][location + 1].toUpperCase());
-            keys[i] = keys[i].slice(0, location) + keys[i].slice(location + 1);
-            location = keys[i].indexOf('_');
-        }
-
-        newObject[keys[i]] = source[originalKey];
-
-    }
-
-    return newObject;
-};
-
-//Receives an object and changes its properties from thisCase to this_case
-const fromCamelCase = (source) => {
-
-    const keys = Object.keys(source);
-    const newObject = {};
-    for (let i = 0; i < keys.length; i += 1) {
-        const originalKey = keys[i];
-        const matches = keys[i].match(/[A-Z]/g);
-        for (const capital of matches) {
-            keys[i] = keys[i].replace(capital, `_${capital.toLowerCase()}`);
-        }
-
-        newObject[keys[i]] = source[originalKey];
-    }
-
-    return newObject;
-};
-
 module.exports = {
     createDatabaseStructure,
     createUser,
     login,
     checkTokenValid,
     invalidateUserToken,
-    toCamelCase,
-    fromCamelCase,
     getUser,
-    editUser
+    editUser,
+    createTask,
+    getTaskForUser,
+    editTask,
+    deleteTask,
+    getTasksForUser
 };
 
-const replaceAt = (text, index, replacement) => {
-
-    return text.substr(0, index) + replacement + text.substr(index + replacement.length);
-};
