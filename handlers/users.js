@@ -6,7 +6,7 @@ const registerUser = async (request, h) => {
 
     const result = await Database.createUser(request.payload);
     if (result) {
-        h.state('token', result);
+        h.state('todosAppToken', result);
         return h.response(result).code(201);
     }
 
@@ -20,7 +20,8 @@ const login = async (request, h) => {
     const result = await Database.login(loginData.email, loginData.password);
 
     if (result) {
-        return h.response(result).code(201);
+        h.state('todosAppToken', result);
+        return h.response(result).code(200);
     }
 
     return h.response('Dados de login inválidos.').code(400);

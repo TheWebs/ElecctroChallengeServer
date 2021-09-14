@@ -11,8 +11,19 @@ const Config = require('./server_configs');
 const init = async () => {
 
     const server = Hapi.server({
-        port: 3000,
-        host: 'localhost'
+        port: 4000,
+        host: 'localhost',
+        routes: {
+            cors: {
+                origin: ['*'],
+                credentials: true
+            }
+        }
+    });
+
+    server.state('todosAppToken', {
+        path: '/',
+        isHttpOnly: false
     });
 
     await server.register(Jwt);
@@ -51,7 +62,7 @@ const init = async () => {
 
     server.route({
         method: 'POST',
-        path: '/register',
+        path: '/users',
         handler: Users.registerUser,
         options: {
             auth: false,
