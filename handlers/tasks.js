@@ -99,24 +99,6 @@ const toCamelCase = (source) => {
     return newObject;
 };
 
-//Receives an object and changes its properties from thisCase to this_case
-const fromCamelCase = (source) => {
-
-    const keys = Object.keys(source);
-    const newObject = {};
-    for (let i = 0; i < keys.length; i += 1) {
-        const originalKey = keys[i];
-        const matches = keys[i].match(/[A-Z]/g);
-        for (const capital of matches) {
-            keys[i] = keys[i].replace(capital, `_${capital.toLowerCase()}`);
-        }
-
-        newObject[keys[i]] = source[originalKey];
-    }
-
-    return newObject;
-};
-
 const replaceAt = (text, index, replacement) => {
 
     return text.substr(0, index) + replacement + text.substr(index + replacement.length);

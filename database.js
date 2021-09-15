@@ -157,7 +157,6 @@ const deleteTask = async (taskId) => {
 
 const getTasksForUser = async (userId, filter, orderBy) => {
 
-    console.log(userId, filter, orderBy);
     const filterOption = { owner: userId };
     if (filter !== 'ALL') {
         filterOption.state = filter;

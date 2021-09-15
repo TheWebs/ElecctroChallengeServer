@@ -100,15 +100,6 @@ const init = async () => {
 
     server.route({
         method: 'GET',
-        path: '/teste',
-        handler: (request, h) => {
-
-            return 'Consegues aceder!';
-        }
-    });
-
-    server.route({
-        method: 'GET',
         path: '/me',
         handler: Users.getUser
     });

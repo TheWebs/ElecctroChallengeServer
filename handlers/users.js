@@ -30,7 +30,6 @@ const login = async (request, h) => {
 const logout = async (request, h) => {
 
     const result = await Database.invalidateUserToken(request.auth.artifacts.token);
-    console.log(result);
     if (result) {
         return h.response('success').code(200);
     }
