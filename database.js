@@ -59,7 +59,7 @@ const createUser = async (user) => {
 
     const invalidEmail = await emailExists(user.email);
     if (invalidEmail) {
-        return false;
+        return { error: 'O email especificado já está em uso.' };
     }
 
     const password = await Bcrypt.hash(user.password, Config.saltRounds);
@@ -72,7 +72,7 @@ const createUser = async (user) => {
         password
     });
     if (!result) {
-        return false;
+        return { error: 'Erro ao criar utilizador.' };
     }
 
     const newUser = await db('users').where({ user_id: result }).select().first();
@@ -171,13 +171,13 @@ const login = async (email, password) => {
 
     const validEmail = await emailExists(email);
     if (!validEmail) {
-        return false;
+        return { error: 'Dados de conta inválidos.' };
     }
 
     const user = await db('users').where({ email }).select().first();
     const validPassword = await Bcrypt.compare(password, user.password);
     if (!validPassword) {
-        return false;
+        return { error: 'Dados de conta inválidos.' };
     }
 
     delete user.password;
@@ -209,14 +209,18 @@ const checkTokenValid = async (token) => {
 const invalidateUserToken = async (token) => {
 
     const success = await db('users').where({ token }).update({ token_expire_date: (Date.now() - 10000) });
-    return success === 1;
+    if (success === 1) {
+        return true;
+    }
+
+    return { error: 'Token inválido.' };
 };
 
 const getUser = async (token) => {
 
     const user = await db('users').column('user_id', 'name', 'email').where({ token }).select().first();
     if (!user) {
-        return false;
+        return { error: 'Utilizador inexistente.' };
     }
 
     return user;
@@ -224,12 +228,21 @@ const getUser = async (token) => {
 
 const editUser = async (token, name, email) => {
 
-    const user = await db('users').column('user_id', 'name', 'email').where({ token }).select().first();
-    if (!user) {
-        return false;
+    if (email) {
+        const emailInUse = await emailExists(email);
+        if (emailInUse) {
+            return { error: 'O email especificado já está em uso.' };
+        }
     }
 
-    const editedUser = await db('users').where({ token }).update({ name, email });
+    const user = await db('users').column('user_id', 'name', 'email').where({ token }).select().first();
+    if (!user) {
+        return { error: 'Utilizador inexistente' };
+    }
+
+    await db('users').where({ token }).update({ name, email });
+    const editedUser = await getUser(token);
+
     return editedUser;
 };
 

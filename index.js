@@ -6,6 +6,10 @@ const Users = require('./handlers/users');
 const Tasks = require('./handlers/tasks');
 const Jwt = require('@hapi/jwt');
 const Config = require('./server_configs');
+const Inert = require('@hapi/inert');
+const Vision = require('@hapi/vision');
+const HapiSwagger = require('hapi-swagger');
+const Pack = require('./package');
 
 
 const init = async () => {
@@ -21,7 +25,24 @@ const init = async () => {
         }
     });
 
+    const swaggerOptions = {
+        info: {
+            title: 'Test API Documentation',
+            version: Pack.version
+        }
+    };
+
+    await server.register([
+        Inert,
+        Vision,
+        {
+            plugin: HapiSwagger,
+            options: swaggerOptions
+        }
+    ]);
+
     server.state('todosAppToken', {
+        ttl: Date.now() + Config.tokenDefaultDuration,
         path: '/',
         isHttpOnly: false
     });
@@ -65,6 +86,7 @@ const init = async () => {
         path: '/users',
         handler: Users.registerUser,
         options: {
+            tags: ['api'],
             auth: false,
             validate: {
                 payload: Joi.object({
@@ -82,6 +104,7 @@ const init = async () => {
         path: '/login',
         handler: Users.login,
         options: {
+            tags: ['api'],
             auth: false,
             validate: {
                 payload: Joi.object({
@@ -95,13 +118,19 @@ const init = async () => {
     server.route({
         method: 'POST',
         path: '/logout',
-        handler: Users.logout
+        handler: Users.logout,
+        options: {
+            tags: ['api']
+        }
     });
 
     server.route({
         method: 'GET',
         path: '/me',
-        handler: Users.getUser
+        handler: Users.getUser,
+        options: {
+            tags: ['api']
+        }
     });
 
     server.route({
@@ -109,6 +138,7 @@ const init = async () => {
         path: '/me',
         handler: Users.editUser,
         options: {
+            tags: ['api'],
             validate: {
                 payload: Joi.object({
                     name: Joi.string().min(3).optional(),
@@ -123,6 +153,7 @@ const init = async () => {
         path: '/todos',
         handler: Tasks.createTask,
         options: {
+            tags: ['api'],
             validate: {
                 payload: Joi.object({
                     description: Joi.string().min(2).required()
@@ -136,6 +167,7 @@ const init = async () => {
         path: '/todo/{id}',
         handler: Tasks.editTask,
         options: {
+            tags: ['api'],
             validate: {
                 payload: Joi.object({
                     description: Joi.string().min(2).optional(),
@@ -153,6 +185,7 @@ const init = async () => {
         path: '/todos',
         handler: Tasks.getTasksForUser,
         options: {
+            tags: ['api'],
             validate: {
                 query: Joi.object({
                     filter: Joi.string()
@@ -171,6 +204,7 @@ const init = async () => {
         path: '/todo/{id}',
         handler: Tasks.deleteTask,
         options: {
+            tags: ['api'],
             validate: {
                 params: Joi.object({
                     id: Joi.number().integer().min(1).required()
