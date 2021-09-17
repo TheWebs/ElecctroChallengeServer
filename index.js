@@ -27,7 +27,7 @@ const init = async () => {
 
     const swaggerOptions = {
         info: {
-            title: 'Test API Documentation',
+            title: 'To do list API documentation',
             version: Pack.version
         }
     };
@@ -86,8 +86,10 @@ const init = async () => {
         path: '/users',
         handler: Users.registerUser,
         options: {
-            tags: ['api'],
             auth: false,
+            description: 'Creates a new account',
+            notes: 'Returns a credential (an authentication token), representing the created user',
+            tags: ['api'],
             validate: {
                 payload: Joi.object({
                     name: Joi.string().min(3).max(30).required(),
@@ -104,8 +106,10 @@ const init = async () => {
         path: '/login',
         handler: Users.login,
         options: {
-            tags: ['api'],
             auth: false,
+            description: 'Authenticates a user',
+            notes: 'Returns a credential (an authentication token), representing the authenticated user',
+            tags: ['api'],
             validate: {
                 payload: Joi.object({
                     email: Joi.string().email().required(),
@@ -120,6 +124,7 @@ const init = async () => {
         path: '/logout',
         handler: Users.logout,
         options: {
+            description: 'Invalidate the credentials of the authenticated user',
             tags: ['api']
         }
     });
@@ -129,6 +134,8 @@ const init = async () => {
         path: '/me',
         handler: Users.getUser,
         options: {
+            description: 'Return the details of the authenticated user',
+            notes: 'Returns a JSON object, representing the authenticated user',
             tags: ['api']
         }
     });
@@ -138,6 +145,8 @@ const init = async () => {
         path: '/me',
         handler: Users.editUser,
         options: {
+            description: 'Edit the details of the authenticated user',
+            notes: 'Returns a JSON object, representing the edited authenticated user',
             tags: ['api'],
             validate: {
                 payload: Joi.object({
@@ -153,6 +162,8 @@ const init = async () => {
         path: '/todos',
         handler: Tasks.createTask,
         options: {
+            description: 'Add a task to the to do list',
+            notes: 'Returns a JSON object, representing the created task',
             tags: ['api'],
             validate: {
                 payload: Joi.object({
@@ -167,6 +178,8 @@ const init = async () => {
         path: '/todo/{id}',
         handler: Tasks.editTask,
         options: {
+            description: 'Edit a task on the to do list',
+            notes: 'Returns a JSON object, representing the edited task',
             tags: ['api'],
             validate: {
                 payload: Joi.object({
@@ -185,6 +198,8 @@ const init = async () => {
         path: '/todos',
         handler: Tasks.getTasksForUser,
         options: {
+            description: 'List the tasks considering the conditions imposed on the query parameters',
+            notes: 'Returns a JSON array of objects, representing the tasks',
             tags: ['api'],
             validate: {
                 query: Joi.object({
@@ -204,6 +219,8 @@ const init = async () => {
         path: '/todo/{id}',
         handler: Tasks.deleteTask,
         options: {
+            description: 'Removes a task from the to do list',
+            notes: 'Returns an empty response if succeeds',
             tags: ['api'],
             validate: {
                 params: Joi.object({
